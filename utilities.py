@@ -9,11 +9,12 @@ from sklearn.svm import LinearSVC
 from datasets import Dataset
 import torch
 import fasttext
+import re
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
 
 
-
-# Loading and preparing the data 
-
+# Loading and preparing the data
 def load_data(pos_path, neg_path):
     """
     Load positive and negative training tweets.
@@ -24,16 +25,37 @@ def load_data(pos_path, neg_path):
         neg_tweets = f.readlines()
     return pos_tweets, neg_tweets
 
+
+def preprocess_tweets(tweets):
+    """
+    Preprocess tweets by cleaning and stemming.
+    Applies the same preprocessing steps for both training and test data.
+    """
+    stop_words = set(stopwords.words('english'))
+    stemmer = PorterStemmer()
+
+    def clean_tweet(tweet):
+        tweet = re.sub(r"http\S+", "", tweet)  # Remove URLs
+        tweet = re.sub(r"@\S+", "", tweet)  # Remove mentions
+        tweet = re.sub(r"[^a-zA-Z\s]", "", tweet)  # Remove special characters
+        tweet = tweet.lower()  # Convert to lowercase
+        tweet = " ".join([stemmer.stem(word) for word in tweet.split() if word not in stop_words])
+        return tweet
+
+    return [clean_tweet(tweet) for tweet in tweets]
+
+
 def preprocess_data(pos_tweets, neg_tweets):
     """
-    Combine and label data for supervised learning.
+    Preprocess training tweets and combine with labels.
     """
     tweets = pos_tweets + neg_tweets
     labels = [1] * len(pos_tweets) + [0] * len(neg_tweets)
+    tweets = preprocess_tweets(tweets)
     return tweets, labels
 
-# Tokenizing and preparing the datasets
 
+# Tokenizing and preparing the datasets
 def prepare_datasets(tweets, labels, tokenizer):
     """
     Tokenize tweets and prepare datasets for training and validation.
@@ -94,11 +116,7 @@ def get_tweet_embeddings(tweets, embeddings_index, embedding_dim=100):
     return np.array(tweet_embeddings)
 
 
-
-
-# Training 
-
-
+# Training
 def train_classifier(features, labels):
     """
     Train the classifier (Log Reg here)
@@ -118,13 +136,14 @@ def train_fasttext(tweets, labels, output_model_path):
             # FastText requires the label to be in the format "__label__<label>"
             f.write(f"__label__{label} {tweet}\n")
 
-    # Train the FastText model
+    # Train the FastText model with tuned parameters
     model = fasttext.train_supervised(
         input=temp_file,
-        lr=0.1,
-        epoch=20,
-        wordNgrams=2,
-        dim=100
+        lr=0.5,          # Increase learning rate
+        epoch=50,        # More training epochs
+        wordNgrams=3,    # Use trigrams
+        dim=300,         # Increase embedding dimension
+        loss='softmax'   # Use softmax loss for better classification
     )
     
     # Save the model
@@ -133,9 +152,7 @@ def train_fasttext(tweets, labels, output_model_path):
     return model
 
 
-
 # Evaluation and saving predictions
-
 def predict_and_save(test_tweets, vectorizer, classifier, output_path):
     """
     Predict on the test set and save predictions for submission.
@@ -175,6 +192,9 @@ def predict_fasttext(test_tweets, model_path, output_path):
     """
     Use a trained FastText model to predict on test data and save results.
     """
+    # Preprocess the test tweets
+    test_tweets = preprocess_tweets(test_tweets)
+
     # Load the trained model
     model = fasttext.load_model(model_path)
 
