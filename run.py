@@ -5,7 +5,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from utilities import * 
+from src.utilities import *
 from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
 from transformers import Trainer, TrainingArguments
 import torch
