@@ -1,15 +1,18 @@
 import os
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from src.utilities import *
-from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
-from transformers import Trainer, TrainingArguments
-import torch
+from sklearn.metrics import accuracy_score, classification_report
+from src.preprocess import preprocess_data, preprocess_tfidf, compute_tfidf, load_glove_embeddings, tweets_to_glove_features, load_data, load_test_data
+from src.train import train_logistic_regression, tune_fasttext_with_optuna, distilbert_hyperparameter_tuning, train_fasttext_with_params
+from src.evaluate import evaluate_and_predict_glove, evaluate_and_predict_tfidf, predict_fasttext, evaluate_fasttext
+from transformers import DistilBertTokenizer, DistilBertForSequenceClassification, RobertaTokenizer, RobertaForSequenceClassification, Trainer, TrainingArguments
+import fasttext
 from datasets import Dataset
+import optuna
+import torch
+
+
 
 def main():
     # Detect device
@@ -25,108 +28,197 @@ def main():
 
     # Load data
     pos_tweets, neg_tweets = load_data(pos_train_path, neg_train_path)
+    test_tweets = load_test_data(test_path)
 
-    # Preprocess data
+    # Lightly preprocess the data for all the methods
     tweets, labels = preprocess_data(pos_tweets, neg_tweets)
 
+    
     # Choose the method
-    method = input("Choose a method (tfidf, glove, fasttext, distilbert): ").strip().lower()
+    method = 'fasttext'  # Choose from 'tfidf', 'glove', 'fasttext', 'distilbert', 'roberta'
 
-    if method == 'tfidf':
-        print("Using Logistic Regression with TF-IDF")
-        # Build features with TF-IDF
-        features, vectorizer = build_features_tfidf(tweets)
+    if method == 'glove':
 
-        # Split data into training and validation sets
-        X_train, X_val, y_train, y_val = train_test_split(features, labels, test_size=0.2, random_state=42)
-
-        # Train the classifier
-        classifier = train_classifier(X_train, y_train)
-
-        # Evaluate on the validation set
-        val_predictions = classifier.predict(X_val)
-        val_accuracy = accuracy_score(y_val, val_predictions)
-        print(f"Validation Accuracy (TF-IDF): {val_accuracy:.4f}")
-
-        # Load test data
-        with open(test_path, 'r', encoding='utf-8') as f:
-            test_tweets = f.readlines()
-
-        # Predict and save
-        predict_and_save(test_tweets, vectorizer, classifier, submission_path)
-
-        print(f"Predictions saved to {submission_path}")
-
-    elif method == 'glove':
-        print("Using Logistic Regression with GloVe Embeddings")
-        # Define the path to GloVe embeddings
-        glove_path = os.path.join(os.path.dirname(__file__), "glove.twitter.27B.100d.txt")
+        # Define paths
+        glove_path = "glove.twitter.27B.100d.txt"
 
         # Load GloVe embeddings
-        embeddings_index = load_glove_embeddings(glove_path)
+        print("Loading GloVe embeddings")
+        glove_embeddings = load_glove_embeddings(glove_path)
+        print("GloVe embeddings loaded.")
 
-        # Generate tweet embeddings
-        embedding_dim = 100  # Match the dimension of the GloVe file
-        features = get_tweet_embeddings(tweets, embeddings_index, embedding_dim=embedding_dim)
-
-        # Split data into training and validation sets
-        X_train, X_val, y_train, y_val = train_test_split(features, labels, test_size=0.2, random_state=42)
-
-        # Train the classifier
-        classifier = train_classifier(X_train, y_train)
-
-        # Evaluate on the validation set
-        val_predictions = classifier.predict(X_val)
-        val_accuracy = accuracy_score(y_val, val_predictions)
-        print(f"Validation Accuracy (GloVe): {val_accuracy:.4f}")
-
-        # Load test data
-        with open(test_path, 'r', encoding='utf-8') as f:
-            test_tweets = f.readlines()
-
-        # Predict and save
-        predict_and_save_glove(test_tweets, embeddings_index, classifier, submission_path)
-
-        print(f"Predictions saved to {submission_path}")
-
-    elif method == 'fasttext':  # FastText method
-        # Define paths for FastText
-        fasttext_model_path = os.path.join(os.path.dirname(__file__), "fasttext_model.bin")
-
-        # Train FastText model
-        print("Training FastText model...")
-        fasttext_model = train_fasttext(tweets, labels, fasttext_model_path)
-
-        # Evaluate on validation set
+        # Split the data into training and validation sets
+        print("Splitting data into train and validation sets")
         X_train, X_val, y_train, y_val = train_test_split(tweets, labels, test_size=0.2, random_state=42)
-        val_predictions = [
-            int(fasttext_model.predict(tweet.strip())[0][0].replace("__label__", ""))
-            for tweet in X_val
-        ]
 
-        val_accuracy = accuracy_score(y_val, val_predictions)
+        # Convert tweets to GloVe feature vectors
+        print("Converting tweets to GloVe feature vectors")
+        X_train_glove = tweets_to_glove_features(X_train, glove_embeddings, embedding_dim=100)
+        X_val_glove = tweets_to_glove_features(X_val, glove_embeddings, embedding_dim=100)
+
+        # Train a Logistic Regression model
+        print("Training Logistic Regression model")
+        model = train_logistic_regression(X_train_glove, y_train)
+
+        # Evaluate and save predictions
+        evaluate_and_predict_glove(
+            model=model,
+            X_val=X_val_glove,
+            y_val=y_val,
+            test_tweets=test_tweets,
+            glove_embeddings=glove_embeddings,
+            embedding_dim=100,  # Match the GloVe embedding dimension
+            submission_path="submission.csv"
+        )
+
+    elif method == 'tfidf':
+
+        tweets = preprocess_tfidf(tweets)
+    
+        # Split the data into training and validation sets
+        X_train, X_val, y_train, y_val = train_test_split(tweets, labels, test_size=0.2, random_state=42)
+
+        # Compute TF-IDF features for training and validation
+        print("Computing TF-IDF features")
+        vectorizer, X_train_tfidf = compute_tfidf(X_train)  # Compute TF-IDF for training data
+        X_val_tfidf = vectorizer.transform(X_val)  # Transform validation data
+
+        # Train a Logistic Regression model
+        print("Training Logistic Regression model")
+        model = train_logistic_regression(X_train_tfidf, y_train)
+
+        # Evaluate and predict
+        print("Evaluating and predicting...")
+        evaluate_and_predict_tfidf(
+            model=model,
+            X_val=X_val_tfidf,
+            y_val=y_val,
+            test_tweets=test_tweets,
+            vectorizer=vectorizer,
+            submission_path=submission_path
+        )
+
+
+    elif method == 'fasttext':
+        # Set hyperparameters
+        fasttext_params = {
+            "lr": 0.1,          # Learning rate
+            "epoch": 25,        # Number of epochs
+            "wordNgrams": 2,    # Use bigrams
+            "dim": 100,         # Embedding dimension
+            "loss": "softmax"   # Loss function
+        }
+
+        # Train FastText model 
+        fasttext_model_path = os.path.join(os.path.dirname(__file__), "fasttext_model.bin")
+        train_fasttext_with_params(tweets, labels, fasttext_model_path, fasttext_params)
+
+        # Evaluate the model on the validation set
+        val_accuracy = evaluate_fasttext(tweets, labels, fasttext_model_path)
         print(f"Validation Accuracy (FastText): {val_accuracy:.4f}")
 
-        # Load test data
+        # Predict on test data and save results
+        predict_fasttext(test_tweets, fasttext_model_path, submission_path)
+
+
+    elif method == 'distilbert':
+        print("Using Pre-trained DistilBERT for Sentiment Classification with Hyperparameter Tuning")
+
+        # Initialize DistilBERT tokenizer
+        tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
+
+        # Split data into training and validation sets
+        train_texts, val_texts, train_labels, val_labels = train_test_split(
+            tweets, labels, test_size=0.2, random_state=42
+        )
+
+        # Tokenize datasets
+        train_encodings = tokenizer(train_texts, truncation=True, padding=True, max_length=128)
+        val_encodings = tokenizer(val_texts, truncation=True, padding=True, max_length=128)
+
+        train_dataset = Dataset.from_dict({
+            'input_ids': train_encodings['input_ids'],
+            'attention_mask': train_encodings['attention_mask'],
+            'labels': train_labels
+        })
+
+        val_dataset = Dataset.from_dict({
+            'input_ids': val_encodings['input_ids'],
+            'attention_mask': val_encodings['attention_mask'],
+            'labels': val_labels
+        })
+
+        # Define model initializer
+        def model_init():
+            return DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=2)
+
+        # Perform hyperparameter tuning
+        best_hyperparams = distilbert_hyperparameter_tuning(train_dataset, val_dataset, model_init)
+
+        # Use best hyperparameters to re-train the model
+        print("Training DistilBERT with Best Hyperparameters...")
+        training_args = TrainingArguments(
+            output_dir="./results",
+            evaluation_strategy="epoch",
+            save_strategy="epoch",
+            learning_rate=best_hyperparams['learning_rate'],
+            per_device_train_batch_size=best_hyperparams['batch_size'],
+            per_device_eval_batch_size=best_hyperparams['batch_size'],
+            num_train_epochs=best_hyperparams['num_train_epochs'],
+            weight_decay=best_hyperparams['weight_decay'],
+            warmup_steps=best_hyperparams['warmup_steps'],
+            logging_dir="./logs",
+            load_best_model_at_end=True,
+            metric_for_best_model="eval_loss",
+            fp16=False,
+            save_total_limit=2
+        )
+
+        trainer = Trainer(
+            model_init=model_init,
+            args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=val_dataset
+        )
+
+        # Train and evaluate
+        trainer.train()
+        eval_results = trainer.evaluate()
+        print(f"Final Validation Loss: {eval_results['eval_loss']:.4f}")
+
+        # Load and predict test data
         with open(test_path, 'r', encoding='utf-8') as f:
             test_tweets = f.readlines()
 
-        # Predict and save results
-        predict_fasttext(test_tweets, fasttext_model_path, submission_path)
+        test_encodings = tokenizer(test_tweets, truncation=True, padding=True, max_length=128)
+        test_dataset = Dataset.from_dict({
+            "input_ids": test_encodings["input_ids"],
+            "attention_mask": test_encodings["attention_mask"]
+        })
 
-        print(f"Predictions saved to {submission_path}")    
+        predictions = trainer.predict(test_dataset)
+        predicted_classes = np.argmax(predictions.predictions, axis=1)
+        predicted_classes = [-1 if p == 0 else 1 for p in predicted_classes]
 
-    elif method == 'distilbert':
-        print("Using Pre-trained DistilBERT for Sentiment Classification")
+        test_ids = range(1, len(test_tweets) + 1)
+        submission = pd.DataFrame({"Id": test_ids, "Prediction": predicted_classes})
+        submission.to_csv(submission_path, index=False)
+        print(f"Predictions saved to {submission_path}")
 
-        # Initialize DistilBERT tokenizer and model
-        tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
-        model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=2).to(device)
 
-        # Split data into training and validation
-        train_texts, val_texts, train_labels, val_labels = train_test_split(tweets, labels, test_size=0.2, random_state=42)        
+    elif method == 'roberta':
+    
+        print("Using Pre-trained RoBERTa-large for Sentiment Classification")
 
-        # Tokenize datasets with increased max_length
+        # Initialize RoBERTa tokenizer and model
+        from transformers import RobertaTokenizer, RobertaForSequenceClassification
+
+        tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
+        model = RobertaForSequenceClassification.from_pretrained("roberta-base", num_labels=2).to(device)
+        # Split data into training and validation sets
+        train_texts, val_texts, train_labels, val_labels = train_test_split(tweets, labels, test_size=0.2, random_state=42)
+
+        # Tokenize datasets
         train_encodings = tokenizer(train_texts, truncation=True, padding=True, max_length=128)
         val_encodings = tokenizer(val_texts, truncation=True, padding=True, max_length=128)
 
@@ -143,18 +235,27 @@ def main():
             'labels': val_labels
         })
 
-        # Training arguments
         training_args = TrainingArguments(
             output_dir="./results",
             evaluation_strategy="epoch",
-            save_strategy="no",
-            learning_rate=2e-5,
-            per_device_train_batch_size=8,
-            num_train_epochs=3,  # Increase epochs
-            weight_decay=0.01,
+            save_strategy="epoch",
+            learning_rate=0.001,  # Initial learning rate
+            warmup_steps=1000,  # Warmup steps
+            lr_scheduler_type="linear",  # Cosine decay for smoother transitions
+            per_device_train_batch_size=8,  # Larger batch size
+            per_device_eval_batch_size=16,
+            gradient_accumulation_steps=2,  # Accumulate gradients to simulate larger batch size
+            num_train_epochs=10,  # Increase epochs
+            weight_decay=0.01,  # Adjust weight decay
             logging_dir="./logs",
-            lr_scheduler_type="linear",  # Use learning rate scheduler
+            save_total_limit=3,  # Keep the best 3 models
+            load_best_model_at_end=True,
+            metric_for_best_model="eval_loss",
+            greater_is_better=False,  # Lower loss is better
+            fp16=True,  # Mixed precision
+            gradient_checkpointing=True,  # Save memory
         )
+
 
         # Trainer
         trainer = Trainer(
@@ -167,24 +268,29 @@ def main():
         # Train and evaluate
         trainer.train()
         eval_results = trainer.evaluate()
-        print(f"Validation Accuracy (DistilBERT): {eval_results['eval_loss']:.4f}")
+        print(f"Validation Loss: {eval_results['eval_loss']:.4f}")
 
-        # Load test data
-        with open(test_path, 'r', encoding='utf-8') as f:
-            test_tweets = f.readlines()
+        val_preds = np.argmax(trainer.predict(val_dataset).predictions, axis=1)
+        val_accuracy = accuracy_score(val_labels, val_preds)
+        print(f"Validation Accuracy: {val_accuracy:.4f}")
 
-        # Preprocess and predict on test data
+
+
+        # Tokenize and prepare test dataset
         test_encodings = tokenizer(test_tweets, truncation=True, padding=True, max_length=128)
-        test_inputs = torch.tensor(test_encodings['input_ids']).to(device)
-        model.eval()
-        with torch.no_grad():
-            outputs = model(test_inputs)
-            predictions = torch.argmax(outputs.logits, dim=1).cpu().numpy()
+        test_dataset = Dataset.from_dict({
+            "input_ids": test_encodings["input_ids"],
+            "attention_mask": test_encodings["attention_mask"]
+        })
+
+        # Predict on test dataset
+        predictions = trainer.predict(test_dataset)
+        predicted_classes = np.argmax(predictions.predictions, axis=1)
 
         # Convert predictions
-        predictions = [-1 if p == 0 else 1 for p in predictions]
+        predicted_classes = [-1 if p == 0 else 1 for p in predicted_classes]
         test_ids = range(1, len(test_tweets) + 1)
-        submission = pd.DataFrame({'Id': test_ids, 'Prediction': predictions})
+        submission = pd.DataFrame({"Id": test_ids, "Prediction": predicted_classes})
         submission.to_csv(submission_path, index=False)
 
         print(f"Predictions saved to {submission_path}")
