@@ -35,9 +35,6 @@ def main():
     # Lightly preprocess the data for all the methods
     tweets, labels = preprocess_data(pos_tweets, neg_tweets)
 
-    # take randomly 1% of the data for hyperparameter tuning
-    tweets, _, labels, _ = train_test_split(tweets, labels, test_size=0.6, random_state=42)
-
     
     # Choose the method
     method = 'fasttext'  # Choose from 'tfidf', 'glove', 'fasttext', 'distilbert', 'roberta'
