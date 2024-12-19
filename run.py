@@ -29,20 +29,22 @@ def main():
     data_dir = os.path.join(os.path.dirname(__file__), "data")
     pos_train_path = os.path.join(data_dir, "train_pos_full.txt")
     neg_train_path = os.path.join(data_dir, "train_neg_full.txt")
-    pos_train_full_path = os.path.join(data_dir, "train_pos_full.txt")  # Full dataset
-    neg_train_full_path = os.path.join(data_dir, "train_neg_full.txt")  # Full dataset
+    pos_train_small_path = os.path.join(data_dir, "train_pos.txt")  # small dataset
+    neg_train_small_path = os.path.join(data_dir, "train_neg.txt")  # small dataset
     test_path = os.path.join(data_dir, "test_data.txt")
     submission_path = os.path.join(os.path.dirname(__file__), "submission.csv")
 
     # Load data
     pos_tweets, neg_tweets = load_data(pos_train_path, neg_train_path)
+    pos_tweets_small, neg_tweets_small = load_data(pos_train_small_path, neg_train_small_path)
     test_tweets = load_test_data(test_path)
 
     # Lightly preprocess the data for all the methods
     tweets, labels = preprocess_data(pos_tweets, neg_tweets)
+    tweets_small, labels_small = preprocess_data(pos_tweets_small, neg_tweets_small)
 
     # Choose the method
-    method = 'tfidf'  # Choose from 'tfidf', 'glove', 'fasttext', 'distilbert', 'roberta'
+    method = 'fasttext'  # Choose from 'tfidf', 'glove', 'fasttext', 'distilbert', 'roberta'
 
     if method == 'glove':
 
@@ -110,21 +112,17 @@ def main():
     elif method == 'fasttext':
         # Perform hyperparameter tuning on the smaller dataset
         print("Tuning FastText hyperparameters on the smaller dataset...")
-        best_params = tune_fasttext_with_optuna(tweets, labels)
+        best_params = tune_fasttext_with_optuna(tweets_small, labels_small)
 
         print(f"Best Hyperparameters from Optuna: {best_params}")
 
-        # Load the full dataset
-        print("Loading full dataset...")
-        pos_tweets_full, neg_tweets_full = load_data(pos_train_full_path, neg_train_full_path)
-        tweets_full, labels_full = preprocess_data(pos_tweets_full, neg_tweets_full)
-
+ 
         # Train FastText model with the best hyperparameters on the full dataset
         print("Training FastText model on the full dataset...")
         fasttext_model_path = os.path.join(os.path.dirname(__file__), "fasttext_model.bin")
         train_file = "fasttext_train_full.txt"
         with open(train_file, "w", encoding="utf-8") as f:
-            for tweet, label in zip(tweets_full, labels_full):
+            for tweet, label in zip(tweets, labels):
                 f.write(f"__label__{label} {tweet}\n")
 
         fasttext_model = fasttext.train_supervised(
@@ -138,7 +136,7 @@ def main():
 
         # Evaluate on validation set
         print("Evaluating FastText model...")
-        X_train, X_val, y_train, y_val = train_test_split(tweets_full, labels_full, test_size=0.2, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(tweets, labels, test_size=0.2, random_state=42)
         val_predictions = [
             int(fasttext_model.predict(tweet.strip())[0][0].replace("__label__", ""))
             for tweet in X_val
