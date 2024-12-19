@@ -134,11 +134,11 @@ The project leverages **Optuna** for efficient hyperparameter optimization. Adju
 
 | **Model**        | **Test Accuracy** | **Test F1 Score** | **Submission ID** |
 |-------------------|--------------------------|--------------------------|--------------------|
-| Logistic Regression (Glove) | 70%                   | 74.3%                    | 276347             |
-| Logistic Regression (TF-IDF)  | 78.2%                   | 78.6%                   | 276722             |
+| Logistic Regression (Glove) | 70%                   | 74.3%                    | 276722             |
+| Logistic Regression (TF-IDF)  | 78.2%                   | 78.6%                   | 276347             |
 | FastText         | 83.9%                   | 84.0%                   | 276771             |
-| DistilBERT       | 88.7%                   | 88.9%                   | 277867             |
-| RoBERTa          | 88.4%                   | 88.7%                   | 277552             |
+| RoBERTa       | 88.4%                   | 88.7%                   | 277552             |
+| DistilBERT          | 88.7%                   | 88.9%                   | 277867             |
 
 ---
 
