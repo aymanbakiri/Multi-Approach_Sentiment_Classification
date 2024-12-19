@@ -2,7 +2,7 @@
 # **Decoding Emotions: A Multi-Approach Sentiment Classification of Tweets**
 
 ## **Overview**
-This project aims to classify tweets based on their sentiment, identifying whether they convey positive :) or negative :( emotions. Multiple approaches were explored, from traditional methods using TF-IDF and GloVe embeddings to more advanced methods like FastText and transformer-based architectures, including DistilBERT and RoBERTa.
+Our Machine Learning project aims to classify tweets based on their sentiment, identifying whether they convey positive :) or negative :( emotions. Multiple approaches were explored, from traditional methods using TF-IDF and GloVe embeddings to more advanced methods like FastText and transformer-based architectures, including DistilBERT and RoBERTa.
 
 The project includes hyperparameter tuning using **Optuna**, efficient model training on large datasets, and a systematic approach to evaluating performance.
 
