@@ -4,8 +4,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 from src.preprocess import preprocess_data, preprocess_tfidf, compute_tfidf, load_glove_embeddings, tweets_to_glove_features, load_data, load_test_data
-from src.train import train_logistic_regression, tune_fasttext_with_optuna, distilbert_hyperparameter_tuning, train_fasttext_with_params
-from src.evaluate import evaluate_and_predict_glove, evaluate_and_predict_tfidf, predict_fasttext, evaluate_fasttext
+from src.train import train_logistic_regression, tune_fasttext_with_optuna, distilbert_hyperparameter_tuning
+from src.evaluate import evaluate_and_predict_glove, evaluate_and_predict_tfidf, predict_fasttext
 from transformers import DistilBertTokenizer, DistilBertForSequenceClassification, RobertaTokenizer, RobertaForSequenceClassification, Trainer, TrainingArguments
 import fasttext
 from datasets import Dataset

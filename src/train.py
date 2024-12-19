@@ -10,7 +10,9 @@ from transformers import Trainer, TrainingArguments
 
 
 
-# Logistic Regression for GLOVE and TF-IDF
+# METHOD 1: Logistic Regression Training with GridSearchCV
+# This method trains a Logistic Regression model using GridSearchCV to identify the best hyperparameters.
+# It saves the results of the GridSearch to a CSV file and returns the best model for evaluation or prediction.
 
 def train_logistic_regression(X_train, y_train, results_file="gridsearch_results.csv"):
     """
@@ -49,58 +51,15 @@ def train_logistic_regression(X_train, y_train, results_file="gridsearch_results
     
     return grid.best_estimator_  # Return the best model
 
-
-# FastText
-
-def train_fasttext_with_params(tweets, labels, output_model_path, best_params):
-    """
-    Train a FastText model using the best hyperparameters.
-
-    Args:
-        tweets: List of tweets to be used as training data.
-        labels: List of labels corresponding to the tweets.
-        output_model_path: File path where the trained FastText model will be saved.
-        best_params: Dictionary containing the best hyperparameters for training FastText.
-
-    Returns:
-        model: Trained FastText model.
-    """
-    # File to store the training data in the format required by FastText
-    train_file = "fasttext_train_full.txt"
-    
-    # Write the training data to the file in FastText's required format: "__label__<label> <text>"
-    with open(train_file, "w", encoding="utf-8") as f:
-        for tweet, label in zip(tweets, labels):
-            # Each line contains the label prefixed by "__label__" followed by the tweet text
-            f.write(f"__label__{label} {tweet}\n")
-
-    # Train the FastText model using the provided hyperparameters
-    model = fasttext.train_supervised(
-        input=train_file,               # Path to the training data file
-        lr=best_params["lr"],          # Learning rate
-        epoch=best_params["epoch"],    # Number of training epochs
-        wordNgrams=best_params["wordNgrams"],  # Maximum number of word n-grams
-        dim=best_params["dim"],        # Embedding dimension
-        loss=best_params["loss"]       # Loss function (e.g., "softmax", "ova")
-    )
-
-    # Save the trained model to the specified file path
-    model.save_model(output_model_path)
-    print(f"FastText model saved to {output_model_path}")
-
-    # Return the trained model for further use or evaluation
-    return model
-
-
-
+# METHOD 2: FastText Hyperparameter Tuning with Optuna
+# This method uses Optuna to perform hyperparameter optimization for FastText.
+# It defines a search space for key parameters and evaluates model performance on validation data.
 def tune_fasttext_with_optuna(tweets, labels):
     """
     Use Optuna to tune FastText hyperparameters.
-
     Args:
         tweets: List of tweet text data.
         labels: List of corresponding labels for the tweets.
-
     Returns:
         best_params: The best hyperparameters found by Optuna.
     """
@@ -162,128 +121,20 @@ def tune_fasttext_with_optuna(tweets, labels):
     # Return the best hyperparameters
     return study.best_params
 
-def tune_fasttext_hyperparams(tweets, labels):
-    """
-    Perform hyperparameter tuning for FastText using Optuna.
 
-    Args:
-        tweets: List of tweet text data.
-        labels: List of corresponding labels for the tweets.
-
-    Returns:
-        best_params: The best hyperparameters found by Optuna.
-        best_value: The highest validation accuracy achieved during tuning.
-    """
-    def objective(trial):
-        """
-        Define the objective function to optimize FastText hyperparameters.
-
-        Args:
-            trial: An Optuna trial object for suggesting hyperparameters.
-
-        Returns:
-            accuracy: Validation accuracy of the FastText model trained with the trial's hyperparameters.
-        """
-        # Define the search space for hyperparameters
-        lr = trial.suggest_loguniform("lr", 0.01, 0.5)  # Learning rate (logarithmic scale)
-        epoch = trial.suggest_int("epoch", 5, 50)      # Number of epochs
-        wordNgrams = trial.suggest_int("wordNgrams", 1, 3)  # Word n-grams (1 to 3)
-        dim = trial.suggest_categorical("dim", [50, 100, 300])  # Embedding dimensions
-        loss = trial.suggest_categorical("loss", ["softmax", "hs", "ns"])  # Loss function type
-
-        # Split the dataset into training and validation sets
-        X_train, X_val, y_train, y_val = train_test_split(tweets, labels, test_size=0.2, random_state=42)
-
-        # Prepare the training file in the required format for FastText
-        train_file = "fasttext_train.txt"
-        with open(train_file, "w", encoding="utf-8") as f:
-            for tweet, label in zip(X_train, y_train):
-                # Format: "__label__<label> <text>"
-                f.write(f"__label__{label} {tweet}\n")
-
-        # Train the FastText model with the suggested hyperparameters
-        model = fasttext.train_supervised(
-            input=train_file,
-            lr=lr,                      # Learning rate
-            epoch=epoch,                # Number of epochs
-            wordNgrams=wordNgrams,      # Maximum word n-grams
-            dim=dim,                    # Embedding dimension
-            loss=loss                   # Loss function
-        )
-
-        # Predict labels for the validation set
-        val_predictions = [
-            int(model.predict(tweet.strip())[0][0].replace("__label__", ""))  # Remove "__label__" prefix
-            for tweet in X_val
-        ]
-
-        # Calculate validation accuracy
-        accuracy = accuracy_score(y_val, val_predictions)
-        return accuracy  # Optuna will maximize this value
-
-    # Create an Optuna study to maximize validation accuracy
-    study = optuna.create_study(direction="maximize")
-    
-    # Run the optimization process for 30 trials
-    study.optimize(objective, n_trials=30)
-
-    # Return the best hyperparameters and the highest accuracy achieved
-    return study.best_params, study.best_value
-
-
-def train_fasttext_with_params(tweets, labels, output_model_path, best_params):
-    """
-    Train a FastText model using the best hyperparameters.
-
-    Args:
-        tweets: List of tweet text data.
-        labels: List of corresponding labels for the tweets.
-        output_model_path: Path where the trained FastText model will be saved.
-        best_params: Dictionary of the best hyperparameters obtained from tuning.
-
-    Returns:
-        model: The trained FastText model.
-    """
-    # Create a temporary file to store the training data in FastText's required format
-    temp_file = "fasttext_train.txt"
-    with open(temp_file, "w", encoding="utf-8") as f:
-        for tweet, label in zip(tweets, labels):
-            # Format each line as "__label__<label> <text>" for FastText training
-            f.write(f"__label__{label} {tweet}\n")
-
-    # Train the FastText model using the provided hyperparameters
-    model = fasttext.train_supervised(
-        input=temp_file,                # Path to the training data file
-        lr=best_params["lr"],          # Learning rate
-        epoch=best_params["epoch"],    # Number of training epochs
-        wordNgrams=best_params["wordNgrams"],  # Maximum word n-grams to consider
-        dim=best_params["dim"],        # Embedding dimension
-        loss=best_params["loss"]       # Loss function 
-    )
-
-    # Save the trained model to the specified path
-    model.save_model(output_model_path)
-    print(f"FastText model saved to {output_model_path}")
-
-    # Return the trained model for further use or evaluation
-    return model
-
-
-
-# DistilBERT
-
+# METHOD 3: Hyperparameter Tuning for DistilBERT with Optuna
+# This method tunes DistilBERT's hyperparameters using Optuna.
+# It utilizes Hugging Face's Trainer API for training and evaluation.
 def distilbert_hyperparameter_tuning(train_dataset, val_dataset, model_init, output_dir="./results"):
     """
     Perform hyperparameter tuning for DistilBERT using Optuna.
-
     Args:
-        train_dataset: The training dataset formatted for the Hugging Face Trainer.
-        val_dataset: The validation dataset formatted for the Hugging Face Trainer.
-        model_init: A callable to initialize the model. Typically a function that returns a DistilBERT model.
-        output_dir: Directory to save the training results and logs.
-
+        train_dataset: Hugging Face Dataset object for training data.
+        val_dataset: Hugging Face Dataset object for validation data.
+        model_init: Callable function to initialize a DistilBERT model.
+        output_dir: Directory to save training results and logs.
     Returns:
-        best_params: Dictionary of the best hyperparameters found by Optuna.
+        dict: The best hyperparameters found by Optuna.
     """
     def objective(trial):
         """
