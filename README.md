@@ -12,7 +12,7 @@ Throughout this project, we prioritized creating a **clean, understandable, and 
 
 - **Maintain a clear directory structure for easy navigation.**
 - **Write modular, well-documented code** to simplify reuse and understanding.
-- **Ensuring that all scripts and notebooks are free from unnecessary clutter**, enabling contributors and reviewers to focus on the core aspects of the project.
+- **Ensure that all scripts and notebooks are free from unnecessary clutter**.
 
 ---
 
