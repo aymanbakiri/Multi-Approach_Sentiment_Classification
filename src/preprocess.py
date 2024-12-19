@@ -179,6 +179,9 @@ def preprocess_tfidf(tweets):
 
     # Download necessary resources
     nltk.download('punkt')  # Download the tokenizer
+    nltk.download('stopwords')  # Download the stopwords
+    nltk.download('wordnet')  # Download WordNet lemmatizer
+    nltk.download('omw-1.4')
    
     # Initialize components
     stop_words = set(stopwords.words('english'))
