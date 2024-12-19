@@ -8,103 +8,160 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 import string
 import nltk
 
-
-# Loading and preparing the data
+# Loading and preparing 
 
 def load_data(pos_path, neg_path):
     """
-    Load positive and negative training tweets.
+    Load positive and negative training tweets from files.
+
+    Args:
+        pos_path: Path to the file containing positive tweets, one tweet per line.
+        neg_path: Path to the file containing negative tweets, one tweet per line.
+
+    Returns:
+        pos_tweets: A list of positive tweets.
+        neg_tweets: A list of negative tweets.
     """
+    # Open and read positive tweets
     with open(pos_path, 'r', encoding='utf-8') as f:
         pos_tweets = f.readlines()
+    
+    # Open and read negative tweets
     with open(neg_path, 'r', encoding='utf-8') as f:
         neg_tweets = f.readlines()
+    
     return pos_tweets, neg_tweets
+
 
 def load_test_data(test_path):
     """
-    Load test tweets.
+    Load test tweets from a file.
+
+    Args:
+        test_path: Path to the file containing test tweets, one tweet per line.
+
+    Returns:
+        test_tweets: A list of test tweets.
     """
+    # Open and read test tweets
     with open(test_path, 'r', encoding='utf-8') as f:
         test_tweets = f.readlines()
+    
     return test_tweets
 
 
 def preprocess_tweets(tweets):
     """
-    Remove URLs, and the word user and <user>" from tweets.
+    Preprocess tweets by removing URLs and specific placeholders like 'user' and '<user>'.
+
+    Args:
+        tweets: A list of raw tweet strings.
+
+    Returns:
+        cleaned_tweets: A list of cleaned tweet strings.
     """
     cleaned_tweets = []
     for tweet in tweets:
-        # Remove URLs
+        # Remove URLs (e.g., http://example.com, https://example.com, www.example.com)
         tweet = re.sub(r"http\S+|www\S+|https\S+", '', tweet, flags=re.MULTILINE)
-        # Remove user mentions
+        # Remove user mentions (e.g., @username)
         tweet = re.sub(r"@[A-Za-z0-9]+", '', tweet)
-        # Remove user mentions
+        # Remove placeholder '<user>'
         tweet = re.sub(r"<user>", '', tweet)
-        # Remove user mentions
+        # Remove the word 'user'
         tweet = re.sub(r"user", '', tweet)
+        # Append cleaned tweet to the list
         cleaned_tweets.append(tweet)
-    return cleaned_tweets
     
+    return cleaned_tweets
+
 
 def preprocess_data(pos_tweets, neg_tweets):
     """
-    Preprocess training tweets and combine with labels.
-    """
-    tweets = pos_tweets + neg_tweets
-    labels = [1] * len(pos_tweets) + [0] * len(neg_tweets)
-    tweets = preprocess_tweets(tweets)
-    return tweets, labels
+    Combine positive and negative tweets into a single dataset, preprocess them, and assign labels.
 
+    Args:
+        pos_tweets: A list of positive tweet strings.
+        neg_tweets: A list of negative tweet strings.
+
+    Returns:
+        tweets: A list of preprocessed tweets.
+        labels: A list of corresponding labels (1 for positive, 0 for negative).
+    """
+    # Combine positive and negative tweets into a single list
+    tweets = pos_tweets + neg_tweets
+    # Create labels: 1 for positive tweets, 0 for negative tweets
+    labels = [1] * len(pos_tweets) + [0] * len(neg_tweets)
+    # Preprocess tweets (e.g., remove URLs, user mentions, and placeholders)
+    tweets = preprocess_tweets(tweets)
+    
+    return tweets, labels
 
 
 # Glove 
 
 def load_glove_embeddings(glove_file_path):
     """
-    Load GloVe embeddings from file into a dictionary.
+    Load GloVe embeddings from a file into a dictionary.
+
     Args:
-        glove_file_path (str): Path to GloVe file.
+        glove_file_path (str): Path to the GloVe file, where each line contains a word followed by its vector.
+
     Returns:
-        dict: A dictionary mapping words to their embedding vectors.
+        dict: A dictionary mapping words (keys) to their embedding vectors (values as NumPy arrays).
     """
     embeddings = {}
+    # Open the GloVe file in read mode
     with open(glove_file_path, 'r', encoding='utf-8') as f:
         for line in f:
+            # Split each line into the word and its corresponding vector
             values = line.split()
-            word = values[0]
-            vector = np.asarray(values[1:], dtype='float32')
-            embeddings[word] = vector
+            word = values[0]  # The first element is the word
+            vector = np.asarray(values[1:], dtype='float32')  # The rest are the embedding vector components
+            embeddings[word] = vector  # Add the word and its vector to the dictionary
     return embeddings
+
 
 def tweet_to_glove_vector(tweet, embeddings, embedding_dim=50):
     """
-    Convert a tweet into an averaged GloVe vector.
+    Convert a single tweet into an averaged GloVe vector.
+
     Args:
         tweet (str): The tweet text.
-        embeddings (dict): Pre-loaded GloVe embeddings.
-        embedding_dim (int): Dimension of embeddings.
+        embeddings (dict): Pre-loaded GloVe embeddings dictionary.
+        embedding_dim (int): Dimension of the embeddings (e.g., 50, 100, 300).
+
     Returns:
-        np.array: Averaged GloVe vector for the tweet.
+        np.array: The averaged GloVe vector for the tweet. If no words in the tweet are found
+                  in the embeddings, returns a zero vector of the specified embedding dimension.
     """
+    # Split the tweet into individual words
     words = tweet.split()
+    # Retrieve GloVe vectors for words present in the embeddings
     vectors = [embeddings[word] for word in words if word in embeddings]
     if len(vectors) == 0:
-        return np.zeros(embedding_dim)  # Return a zero vector if no words are in embeddings
+        # If no words are found in the embeddings, return a zero vector
+        return np.zeros(embedding_dim)
+    # Compute the mean of all word vectors in the tweet
     return np.mean(vectors, axis=0)
+
 
 def tweets_to_glove_features(tweets, embeddings, embedding_dim=50):
     """
-    Convert a list of tweets into feature vectors.
+    Convert a list of tweets into a matrix of feature vectors using GloVe embeddings.
+
     Args:
-        tweets (list of str): List of tweets.
-        embeddings (dict): Pre-loaded GloVe embeddings.
-        embedding_dim (int): Dimension of embeddings.
+        tweets (list of str): List of tweets to be converted into feature vectors.
+        embeddings (dict): Pre-loaded GloVe embeddings dictionary.
+        embedding_dim (int): Dimension of the embeddings (e.g., 50, 100, 300).
+
     Returns:
-        np.array: Feature vectors for all tweets.
+        np.array: A 2D NumPy array where each row corresponds to the averaged GloVe vector
+                  of a tweet, and the number of columns matches the embedding dimension.
     """
+    # Use list comprehension to convert each tweet into its GloVe vector
     return np.array([tweet_to_glove_vector(tweet, embeddings, embedding_dim) for tweet in tweets])
+
 
 
 # TF-IDF

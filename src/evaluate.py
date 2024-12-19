@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 import fasttext
 
 
+# Glove
 
 def evaluate_and_predict_glove(model, X_val, y_val, test_tweets, glove_embeddings, embedding_dim, submission_path):
     """
@@ -44,7 +45,7 @@ def evaluate_and_predict_glove(model, X_val, y_val, test_tweets, glove_embedding
     # Return validation accuracy for consistency
     return val_accuracy
 
-
+# TF-IDF
 
 def evaluate_and_predict_tfidf(model, X_val, y_val, test_tweets, vectorizer, submission_path):
     """
@@ -81,8 +82,7 @@ def evaluate_and_predict_tfidf(model, X_val, y_val, test_tweets, vectorizer, sub
     return val_accuracy
 
 
-
-# Predict and save results
+# FastText
 
 def evaluate_fasttext(tweets, labels, model_path):
     """

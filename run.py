@@ -15,14 +15,20 @@ import torch
 
 
 def main():
-    # Detect device
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    
+    # Check and set the appropriate device
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")  # Apple Silicon Metal Performance Shaders (MPS)
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")  # NVIDIA CUDA GPU
+    else:
+        device = torch.device("cpu")  # Fallback to CPU
     print(f"Using device: {device}")
 
     # Define paths
     data_dir = os.path.join(os.path.dirname(__file__), "data")
-    pos_train_path = os.path.join(data_dir, "train_pos.txt")
-    neg_train_path = os.path.join(data_dir, "train_neg.txt")
+    pos_train_path = os.path.join(data_dir, "train_pos_full.txt")
+    neg_train_path = os.path.join(data_dir, "train_neg_full.txt")
     pos_train_full_path = os.path.join(data_dir, "train_pos_full.txt")  # Full dataset
     neg_train_full_path = os.path.join(data_dir, "train_neg_full.txt")  # Full dataset
     test_path = os.path.join(data_dir, "test_data.txt")
@@ -35,9 +41,8 @@ def main():
     # Lightly preprocess the data for all the methods
     tweets, labels = preprocess_data(pos_tweets, neg_tweets)
 
-    
     # Choose the method
-    method = 'fasttext'  # Choose from 'tfidf', 'glove', 'fasttext', 'distilbert', 'roberta'
+    method = 'tfidf'  # Choose from 'tfidf', 'glove', 'fasttext', 'distilbert', 'roberta'
 
     if method == 'glove':
 
@@ -75,6 +80,7 @@ def main():
 
     elif method == 'tfidf':
 
+        # Further Preprocessing of the data for TF-IDF
         tweets = preprocess_tfidf(tweets)
     
         # Split the data into training and validation sets
