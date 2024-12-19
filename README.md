@@ -1,6 +1,3 @@
-Here’s a README file tailored to your current project based on the structure and code you provided:
-
----
 
 # **Decoding Emotions: A Multi-Approach Sentiment Classification of Tweets**
 
@@ -143,11 +140,3 @@ The project leverages **Optuna** for efficient hyperparameter optimization. Adju
 - **Ben Mohamed Nizar**
 - **Chahed Ouazzani Adam**
 
----
-
-## **License**
-This project is licensed under the MIT License.
-
----
-
-Let me know if you need further adjustments!
