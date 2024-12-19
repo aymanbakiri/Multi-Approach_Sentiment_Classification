@@ -92,7 +92,7 @@ def tune_fasttext_with_optuna(tweets, labels):
 
     # Run Optuna optimization
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=50)  # Adjust n_trials for faster/slower tuning
+    study.optimize(objective, n_trials=20)  # Adjust n_trials for faster/slower tuning
 
     if study.best_params:
         print(f"Best Hyperparameters: {study.best_params}")
