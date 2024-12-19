@@ -176,6 +176,10 @@ def preprocess_tfidf(tweets):
     Returns:
         list of str: Preprocessed tweets.
     """
+
+    # Download necessary resources
+    nltk.download('punkt')  # Download the tokenizer
+   
     # Initialize components
     stop_words = set(stopwords.words('english'))
     stemmer = PorterStemmer()

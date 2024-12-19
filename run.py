@@ -44,7 +44,7 @@ def main():
     tweets_small, labels_small = preprocess_data(pos_tweets_small, neg_tweets_small)
 
     # Choose the method
-    method = 'fasttext'  # Choose from 'tfidf', 'glove', 'fasttext', 'distilbert', 'roberta'
+    method = 'tfidf'  # Choose from 'tfidf', 'glove', 'fasttext', 'distilbert', 'roberta'
 
     if method == 'glove':
 
