@@ -277,13 +277,13 @@ def main():
             output_dir="./results",
             evaluation_strategy="epoch",
             save_strategy="epoch",
-            learning_rate=0.001,  # Initial learning rate
-            warmup_steps=1000,  # Warmup steps
-            lr_scheduler_type="linear",  # Cosine decay for smoother transitions
+            learning_rate=2e-5,  # Initial learning rate
+            warmup_steps=200,  # Warmup steps
+            lr_scheduler_type="cosine",  # Cosine decay for smoother transitions
             per_device_train_batch_size=8,  # Larger batch size
             per_device_eval_batch_size=16,
             gradient_accumulation_steps=2,  # Accumulate gradients to simulate larger batch size
-            num_train_epochs=10,  # Increase epochs
+            num_train_epochs=7,  # Increase epochs
             weight_decay=0.01,  # Adjust weight decay
             logging_dir="./logs",
             save_total_limit=3,  # Keep the best 3 models
