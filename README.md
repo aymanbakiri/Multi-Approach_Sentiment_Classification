@@ -32,7 +32,7 @@ Throughout this project, we prioritized creating a **clean, understandable, and 
 │   ├── preprocess.py         # Preprocessing scripts
 │   ├── train.py              # Training scripts
 │   ├── evaluate.py           # Evaluation scripts
-├── submission.csv            # Final submission file
+├── submission.csv            # Test set submission file
 ├── run.py                    # Main script to run the project
 ├── requirements.txt          # Python dependencies
 ```
