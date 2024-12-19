@@ -44,7 +44,7 @@ Throughout this project, we prioritized creating a **clean, understandable, and 
 ### **1. GloVe + Logistic Regression**
 - **Features**: Pre-trained GloVe embeddings (100-dimensional) were used to represent tweets as averaged word embeddings.
 - **Classifier**: Trained Logistic Regression with hyperparameter tuning.
-- **Validation Accuracy**: Achieved **83.0%**.
+- **Validation Accuracy**: Achieved **76.0%**.
 
 ### **2. TF-IDF + Logistic Regression**
 - **Features**: Used TF-IDF vectors with n-grams (up to bigrams or trigrams) as features.
