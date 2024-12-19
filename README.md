@@ -73,7 +73,7 @@ Throughout this project, we prioritized creating a **clean, understandable, and 
 - **Best F1 Score**: **88.9%**.
 
 ### **5. RoBERTa**
-- **Model**: Pre-trained RoBERTa (`roberta-base`), fine-tuned for sentiment classification.
+- **Model**: Pre-trained RoBERTa (`roberta-base`).
 - **Validation Accuracy**: Achieved **88.4%**.
 - **Best F1 Score**: **88.7%**.
 
