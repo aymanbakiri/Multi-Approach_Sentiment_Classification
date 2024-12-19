@@ -87,10 +87,11 @@ The project includes hyperparameter tuning using **Optuna**, efficient model tra
 3. Download and place the dataset files in a `data/` directory inside ml-project-2-mocro_learning.
 
 
-4. Download the GloVe Twitter embeddings (glove.twitter.27B.zip) from the official GloVe website, extract it, and place the file glove.twitter.27B.100d.txt directly inside the project folder (ml-project-2-mocro_learning/):
-
-ml-project-2-mocro_learning/
-├── glove.twitter.27B.100d.txt
+4. Download the **GloVe Twitter embeddings** from the [official GloVe website](https://nlp.stanford.edu/projects/glove/), extract it, and place the file `glove.twitter.27B.100d.txt` directly in the project folder (`ml-project-2-mocro_learning/`):
+```
+  ml-project-2-mocro_learning/
+  ├── glove.twitter.27B.100d.txt
+```
 
 ---
 
