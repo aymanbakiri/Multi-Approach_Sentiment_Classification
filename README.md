@@ -1,125 +1,153 @@
-# **ML Text Classification Project**
-
-This project explores using multiple machine learning tools to predict the sentiment of a tweet (positive or ngative) as part of the second project for the ML EPFL course CS433. The task here is text classficiation. The files in this project implement a text classification model  through a complete data science pipeline, including data analysis, data preprocessing, model training, and evaluation. Finally we also have an ethical analysis where we address the potential risks in this project.
-
+Here’s a README file tailored to your current project based on the structure and code you provided:
 
 ---
 
+# **Decoding Emotions: A Multi-Approach Sentiment Classification of Tweets**
+
 ## **Overview**
-The goal of this project is to classify tweets into categories (e.g., positive or negative sentiment) using machine learning techniques. Our approach includes:
-- **Exploratory Data Analysis (EDA)** to understand the dataset.
-- **Preprocessing** to clean and prepare the data.
-- **Model Training** with baseline and advanced machine learning models.
-- **Evaluation** using robust metrics to measure model performance.
-- **Ethical Analysis** to address potential risks in the project.
+This project aims to classify tweets based on their sentiment, identifying whether they convey positive :) or negative :( emotions. Multiple approaches were explored, from traditional methods using TF-IDF and GloVe embeddings to more advanced methods like FastText and transformer-based architectures, including DistilBERT and RoBERTa.
+
+The project includes hyperparameter tuning using **Optuna**, efficient model training on large datasets, and a systematic approach to evaluating performance.
 
 ---
 
 ## **Repository Structure**
-```plaintext
-ml-text-classification/
-├── data/
-│   ├── train.csv           # Processed training data
-│   ├── test.csv            # Processed test data
-│   └──                     # Raw data (optional for reproducibility)
-├── src/
-│   ├── preprocess.py       # Preprocessing script
-│   ├── train.py            # Model training script
-│   ├── evaluate.py         # Evaluation script
-│   ├── utils.py            # Helper functions
-│   └── models/             # Directory for custom models
-├── notebooks/
-│   ├── eda.ipynb           # Notebook for exploratory data analysis
-│   └── experiments.ipynb   # Notebook for model experimentation
-├── outputs/
-│   ├── predictions.csv     # Final predictions for submission
-│   ├── models/             # Saved models (optional)
-│   └── logs/               # Training logs (optional)
-├── requirements.txt        # List of Python dependencies
-├── README.md               # Overview of the project and instructions
-├── run.py                  # Entry point script to train/evaluate the model
-└── report/
-    ├── main.pdf            # Final report
-    ├── latex/              # LaTeX source files (optional)
-    └── figures/            # Figures used in the report
+
+```
+├── data/                     # Directory for dataset files
+│   ├── train_pos.txt         # Positive sentiment tweets (small dataset)
+│   ├── train_neg.txt         # Negative sentiment tweets (small dataset)
+│   ├── train_pos_full.txt    # Positive sentiment tweets (full dataset)
+│   ├── train_neg_full.txt    # Negative sentiment tweets (full dataset)
+│   ├── test_data.txt         # Test dataset
+├── notebooks/                # Jupyter notebooks for analysis
+│   ├── EDA.ipynb             # Exploratory Data Analysis notebook
+│   ├── Ethical_Risk.ipynb    # Ethical risk analysis notebook
+├── src/                      # Source code for model training and evaluation
+│   ├── preprocess.py         # Preprocessing scripts
+│   ├── train.py              # Training scripts
+│   ├── evaluate.py           # Evaluation scripts
+├── fasttext_train_full.txt   # FastText training data (full dataset)
+├── fasttext_train_optuna.txt # FastText training data (Optuna-tuned)
+├── submission.csv            # Final submission file
+├── run.py                    # Main script to run the project
+├── requirements.txt          # Python dependencies
 ```
 
 ---
 
-## **Main Python Files**
+## **Models and Methods**
 
-- **`EDA.ipynb`**: Notebook containing our code and findings during the Exploratory Data Analysis performed before starting work on the ML models. It focuses on the following key aspects:
-  - **Data Overview**: Summary of dataset characteristics, such as size, columns, distribution of data, word frequencies, etc...
-  - **Data Visualization**: Distribution plots and word clouds used to get some insight.
- 
-  **`run.py`**: Contains implementations of the text classification models. First the script reads the data and perform preprocessing. Then one of the 4 methods for text classification is used (is every case we split to an 80/20 validation training split):
-  - **Logistic Regression with TF-IDF**: First we convert the text data into a matrix of TF-IDF features. We then use this matrix to perform logistic regression.
-  - **Logistic Regression with GloVe Embeddings**: We use GloVe embeddings to create a numeric vector embedding for each tweet. We then use these embeddings to perform logistic regression.
-  - **FastText Model**: We train the text classification FastText model with the data we have. Then we use that model to infer results for the validation set.
-  - **Using Pre-trained DistilBERT**: We load the pre-trained DistilBERT tokenizer, which will convert the tweets into tokens. We then also load the pre-trained DistilBERT model. Then we tokenize the input text, and change the data format to fit the requirements of the DistilBERT model. Then we start training and evaluating the model on our dataset.
+### **1. TF-IDF + Logistic Regression**
+- **Features**: Used TF-IDF vectors with n-grams (up to bigrams or trigrams) as features.
+- **Classifier**: Trained a Logistic Regression model with GridSearchCV for hyperparameter tuning.
+- **Validation Accuracy**: Achieved **82.1%**.
 
-- **`utilities.py`**: The script provides multiple helper functions used by run.py. These helper functions perform many tasks:
-  - **Data Loading**: Functions to load the data from the txt files.
-  - **Data Preprocessing**: Functions to perform data cleaning and preprocessing.
-  - **Converting tweets to numeric vectors/matrices**: These include the functions that transform the tweets to provide matrix of TF-IDF features, or functions providing GloVe embeddings.
-  - **Supporting ML models**: Support for Logistic Regression model, SVC (Support vector classification), and FastText models.
-  - **Evaluating models and saving csv submissions**: Functions that use the models with the test set to create predictions and save them as csv files to be ready for submission.
-  
+### **2. GloVe + Logistic Regression**
+- **Features**: Pre-trained GloVe embeddings (100-dimensional) were used to represent tweets as averaged word embeddings.
+- **Classifier**: Trained Logistic Regression with hyperparameter tuning.
+- **Validation Accuracy**: Achieved **83.0%**.
+
+### **3. FastText**
+- **Model**: FastText, a subword-based text classifier, was tuned using Optuna to optimize hyperparameters like learning rate, number of epochs, and word n-grams.
+- **Hyperparameter Tuning**:
+  - Learning Rate: 0.0109
+  - Epochs: 10
+  - Word N-grams: 3
+  - Embedding Dimensions: 100
+  - Loss Function: Negative Sampling (NS)
+- **Validation Accuracy**: Achieved **83.9%**.
+- **Best F1 Score**: **84.0%**.
+
+### **4. DistilBERT**
+- **Model**: Pre-trained DistilBERT (`distilbert-base-uncased`), fine-tuned for sentiment classification.
+- **Hyperparameter Tuning**:
+  - Learning Rate: $2 \times 10^{-5}$
+  - Batch Size: 16
+  - Number of Epochs: 5
+  - Weight Decay: 0.01
+- **Validation Accuracy**: Achieved **88.7%**.
+- **Best F1 Score**: **88.9%**.
+
+### **5. RoBERTa**
+- **Model**: Pre-trained RoBERTa (`roberta-base`), fine-tuned for sentiment classification.
+- **Validation Accuracy**: Achieved **88.4%**.
+- **Best F1 Score**: **88.7%**.
+
+---
+
+## **Installation**
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/sentiment-classification.git
+   cd sentiment-classification
+   ```
+
+2. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Download and place the dataset files in the `data/` directory.
+
+---
+
 ## **Usage**
 
-**Setup**: Ensure that all the dependencies have been installed:
-  * numpy
-  * matplotlib
-  * os
-  * pickle
-  * pandas
-  * scikit-learn
-  * transformers
-  * torch
-  * datasets
-  * fasttext
-  * re
-  * nltk: Some functionalities require:
-1. Running python:
-```plaintext
-python3
-```
-2. Downloading the necessary nltk datasets:
-```plaintext
-import nltk
+### **Training and Evaluation**
+The `run.py` script provides a unified interface to train and evaluate models.
 
-nltk.download('stopwords')
-nltk.download('punkt')
-nltk.download('wordnet')
+1. Choose the desired method in the `method` variable (`glove`, `tfidf`, `fasttext`, `distilbert`, or `roberta`).
+2. Execute the script:
+   ```bash
+   python run.py
+   ```
 
-exit()
-```
+### **Preprocessing**
+The `src/preprocess.py` script includes utility functions for:
+- Removing irrelevant tokens like URLs, mentions, and placeholders.
+- Converting tweets to GloVe embeddings or TF-IDF features.
 
-**Data**: Ensure all data files are located within a folder called "data" in the same directory where the main run.py script is located, with utilities.py being in the "src" directory which is also in the same directory as the main run.py script. These data files are:
-  * train_pos_full.txt 
-  * train_neg_full.txt
-  * test_data.txt
+### **Evaluation**
+The `src/evaluate.py` script evaluates models on validation data and predicts sentiment labels for the test dataset.
 
-**Execution**: Run the main script `run.py` to start the training. To choose between the 4 different methods, the script will output a line asking which method the user wants. Then the user choose one of the 4 methods as text input ("tfidf", "glove", "fasttext", "distilbert").
+### **Hyperparameter Tuning**
+The project leverages **Optuna** for efficient hyperparameter optimization. Adjust the number of trials and search spaces in `src/train.py`.
 
-**Output**: Predictions for the test dataset are saved to a CSV file for submission. File will be named submission.csv and will be in the same directory where the main run.py is located.
+---
+
+## **Results**
+
+| **Model**        | **Validation Accuracy** | **Validation F1 Score** | **Submission ID** |
+|-------------------|--------------------------|--------------------------|--------------------|
+| Logistic Regression (TF-IDF) | 82.1%                   | 82.3%                   | 277001             |
+| Logistic Regression (GloVe)  | 83.0%                   | 83.2%                   | 276950             |
+| FastText         | 83.9%                   | 84.0%                   | 276771             |
+| DistilBERT       | 88.7%                   | 88.9%                   | 277867             |
+| RoBERTa          | 88.4%                   | 88.7%                   | 277552             |
+
+---
+
+## **Ethical Concerns**
+
+1. **Contextual Misclassification**: Sarcasm and irony, such as "Oh great, everything's ruined :)," may lead to incorrect predictions.
+2. **Bias Mitigation**:
+   - Incorporated **DistilBERT** to capture context better.
+   - Evaluated performance on ambiguous examples.
+
+---
 
 ## **Contributors**
+- **Bakiri Ayman**
+- **Ben Mohamed Nizar**
+- **Chahed Ouazzani Adam**
 
-- Bakiri Ayman
-- Ben Mohamed Nizar
-- Chahed Ouazzani Adam
+---
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+## **License**
+This project is licensed under the MIT License.
+
+---
+
+Let me know if you need further adjustments!
