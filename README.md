@@ -31,11 +31,12 @@ The project includes hyperparameter tuning using **Optuna**, efficient model tra
 
 ---
 
+## **Models and Methods**
+
 ### **1. GloVe + Logistic Regression**
 - **Features**: Pre-trained GloVe embeddings (100-dimensional) were used to represent tweets as averaged word embeddings.
 - **Classifier**: Trained Logistic Regression with hyperparameter tuning.
 - **Validation Accuracy**: Achieved **83.0%**.
-## **Models and Methods**
 
 ### **2. TF-IDF + Logistic Regression**
 - **Features**: Used TF-IDF vectors with n-grams (up to bigrams or trigrams) as features.
