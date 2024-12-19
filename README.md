@@ -75,8 +75,8 @@ The project includes hyperparameter tuning using **Optuna**, efficient model tra
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/sentiment-classification.git
-   cd sentiment-classification
+   git clone https://github.com/CS-433/ml-project-2-mocro_learning.git
+   cd ml-project-2-mocro_learning
    ```
 
 2. Install the required dependencies:
@@ -84,7 +84,7 @@ The project includes hyperparameter tuning using **Optuna**, efficient model tra
    pip install -r requirements.txt
    ```
 
-3. Download and place the dataset files in the `data/` directory.
+3. Download and place the dataset files in a `data/` directory inside ml-project-2-mocro_learning.
 
 ---
 
@@ -124,14 +124,6 @@ The project leverages **Optuna** for efficient hyperparameter optimization. Adju
 
 ---
 
-## **Ethical Concerns**
-
-1. **Contextual Misclassification**: Sarcasm and irony, such as "Oh great, everything's ruined :)," may lead to incorrect predictions.
-2. **Bias Mitigation**:
-   - Incorporated **DistilBERT** to capture context better.
-   - Evaluated performance on ambiguous examples.
-
----
 
 ## **Contributors**
 - **Bakiri Ayman**
