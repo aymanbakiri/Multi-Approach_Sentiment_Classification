@@ -6,6 +6,14 @@ This project aims to classify tweets based on their sentiment, identifying wheth
 
 The project includes hyperparameter tuning using **Optuna**, efficient model training on large datasets, and a systematic approach to evaluating performance.
 
+## Repository Philosophy
+
+Throughout this project, we prioritized creating a **clean, understandable, and concise repository**. Our goal was to ensure that anyone exploring the code, dataset, and analysis could do so efficiently and with minimal confusion. We aimed to :
+
+- **Maintain a clear directory structure for easy navigation.**
+- **Write modular, well-documented code** to simplify reuse and understanding.
+- **Ensuring that all scripts and notebooks are free from unnecessary clutter**, enabling contributors and reviewers to focus on the core aspects of the project.
+
 ---
 
 ## **Repository Structure**
