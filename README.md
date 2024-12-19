@@ -54,11 +54,11 @@ Throughout this project, we prioritized creating a **clean, understandable, and 
 ### **3. FastText**
 - **Model**: FastText, a subword-based text classifier, was tuned using Optuna to optimize hyperparameters like learning rate, number of epochs, and word n-grams.
 - **Hyperparameter Tuning**:
-  - Learning Rate: 0.0109
-  - Epochs: 10
-  - Word N-grams: 3
-  - Embedding Dimensions: 100
-  - Loss Function: Negative Sampling (NS)
+  - Learning Rate: 0.00347
+  - Epochs: 69
+  - Word N-grams: 4
+  - Embedding Dimensions: 50
+  - Loss Function: softmax
 - **Validation Accuracy**: Achieved **83.9%**.
 - **Best F1 Score**: **84.0%**.
 
