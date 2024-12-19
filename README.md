@@ -24,8 +24,6 @@ The project includes hyperparameter tuning using **Optuna**, efficient model tra
 │   ├── preprocess.py         # Preprocessing scripts
 │   ├── train.py              # Training scripts
 │   ├── evaluate.py           # Evaluation scripts
-├── fasttext_train_full.txt   # FastText training data (full dataset)
-├── fasttext_train_optuna.txt # FastText training data (Optuna-tuned)
 ├── submission.csv            # Final submission file
 ├── run.py                    # Main script to run the project
 ├── requirements.txt          # Python dependencies
