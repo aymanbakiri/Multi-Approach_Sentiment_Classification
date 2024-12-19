@@ -248,7 +248,7 @@ def main():
 
     elif method == 'roberta':
     
-        print("Using Pre-trained RoBERTa-large for Sentiment Classification")
+        print("Using Pre-trained RoBERTa-base for Sentiment Classification")
 
         # Initialize RoBERTa tokenizer and model
         from transformers import RobertaTokenizer, RobertaForSequenceClassification
