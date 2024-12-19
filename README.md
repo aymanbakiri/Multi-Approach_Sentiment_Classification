@@ -95,10 +95,13 @@ Throughout this project, we prioritized creating a **clean, understandable, and 
 3. Download and place the dataset files in a `data/` directory inside ml-project-2-mocro_learning.
 
 
-4. Download the **GloVe Twitter embeddings** from the [official GloVe website](https://nlp.stanford.edu/projects/glove/), extract it, and place the file `glove.twitter.27B.100d.txt` directly in the project folder (`ml-project-2-mocro_learning/`):
+4. Download the **GloVe Twitter embeddings** from the [official GloVe website](https://nlp.stanford.edu/projects/glove/), extract it, and place the files `glove.twitter.27B.50d.txt`, `glove.twitter.27B.100d.txt` and `glove.twitter.27B.300d.txt` directly in the project folder (`ml-project-2-mocro_learning/`):
   ```bash
   ml-project-2-mocro_learning/
+  ├── glove.twitter.27B.50d.txt
   ├── glove.twitter.27B.100d.txt
+  ├── glove.twitter.27B.200d.txt
+
   ```
 
 ---
